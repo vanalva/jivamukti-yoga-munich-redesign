@@ -24,7 +24,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
   <link href="../css/variables.css?v=5bb07b17" rel="stylesheet" type="text/css">
   <link href="../css/framework.css?v=c3ccd0de" rel="stylesheet" type="text/css">
-  <link href="../css/project.css?v=2e0a850b" rel="stylesheet" type="text/css">
+  <link href="../css/project.css?v=4b35ed94" rel="stylesheet" type="text/css">
   <!-- S1 wave-3 staging: merge into project.css and drop this link. -->
 <script src="../js/motion.js?v=d8884c85"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css">
@@ -181,10 +181,10 @@
                 <li class="nav_buttons_item is-main w-variant-23049969-09ac-2789-520b-3c6ae895bbc6">
                   <div data-wf--button-main--variant="secondary" class="button_main_wrap" data-button=" " data-trigger="hover focus">
                     <div class="clickable_wrap u-cover-absolute">
-                      <a href="#gutschein" aria-label="Promo ansehen" class="clickable_link w-inline-block"></a>
+                      <a href="#gutschein" aria-label="Events ansehen" class="clickable_link w-inline-block"></a>
                     </div>
                     <div class="button_main_element w-variant-e85564cd-af30-a478-692b-71732aefb3ab">
-                      <div aria-hidden="true" class="button_main_text u-text-style-main">Promo</div>
+                      <div aria-hidden="true" class="button_main_text u-text-style-main">Events</div>
                       <div class="button_main_icon u-hide-if-empty"></div>
                     </div>
                   </div>
@@ -288,10 +288,10 @@
                     <li class="nav_buttons_item is-main">
                       <div data-wf--button-main--variant="secondary" class="button_main_wrap" data-button=" " data-trigger="hover focus">
                         <div class="clickable_wrap u-cover-absolute">
-                          <a href="#gutschein" aria-label="Promo ansehen" class="clickable_link w-inline-block"></a>
+                          <a href="#gutschein" aria-label="Events ansehen" class="clickable_link w-inline-block"></a>
                         </div>
                         <div class="button_main_element w-variant-e85564cd-af30-a478-692b-71732aefb3ab">
-                          <div aria-hidden="true" class="button_main_text u-text-style-main">Promo</div>
+                          <div aria-hidden="true" class="button_main_text u-text-style-main">Events</div>
                           <div class="button_main_icon u-hide-if-empty"></div>
                         </div>
                       </div>
@@ -456,31 +456,58 @@ document.addEventListener("DOMContentLoaded", function () {
     </main>
   </div>
 
-  <!-- Gutschein Modal -->
-  <div class="gutschein_modal_overlay" id="gutscheinModal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Promo ansehen">
+  <!-- Events Modal (navbar "Events"): upcoming events as simple cards. Lists and
+       images fill live from Eversports (../js/events-live.js); what is written here is the fallback. -->
+  <div class="gutschein_modal_overlay" id="gutscheinModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="events-modal-title">
     <div class="gutschein_modal_backdrop"></div>
-    <div class="gutschein_modal_wrap">
+    <div class="gutschein_modal_wrap is-events" data-jym-base="../">
       <button type="button" class="gutschein_modal_close" aria-label="Schließen" data-close-gutschein>
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 20 19" fill="none" aria-hidden="true"><path d="M1.51471 1.01465L18.4853 17.9852" stroke="currentColor" stroke-width="2"></path><path d="M1.51471 17.9851L18.4853 1.01454" stroke="currentColor" stroke-width="2"></path></svg>
       </button>
-      <div class="promo_placeholder u-padding-8 u-alignment-center">
-        <p class="u-eyebrow-text u-text-style-small u-letter-spacing-wider u-text-transform-uppercase">Nächstes Event</p>
-        <h2 class="u-text-style-h3 u-margin-top-3">Danny Paradise — 2-Day Yoga Workshop</h2>
-        <p class="u-text-style-large u-margin-top-3 u-max-width-50ch">
-          Zwei Tage mit Danny Paradise, einem der Pioniere des modernen Yoga. Sichere dir deinen Platz über Eversports.
-        </p>
-        <div class="u-button-wrapper u-margin-top-5">
-          <div class="u-display-contents">
-            <div data-wf--button-main--variant="primary" class="button_main_wrap" data-button=" " data-trigger="hover focus">
-              <div class="clickable_wrap u-cover-absolute">
-                <a href="https://www.eversports.de/org/activity/c9b5bc9e-486c-4ab9-bf69-7a91c50ba40e" target="_blank" rel="noopener" aria-label="Danny Paradise Workshop buchen" class="clickable_link w-inline-block"></a>
-              </div>
-              <div class="button_main_element">
-                <div aria-hidden="true" class="button_main_text u-text-style-main">Jetzt buchen</div>
-              </div>
-            </div>
-          </div>
+      <div class="events_modal_head">
+        <div>
+          <p class="hero_eyebrow">Jivamukti Yoga München &middot; Lehel &amp; Glockenbach</p>
+          <h2 id="events-modal-title" class="events_modal_title u-text-style-h3">Kommende Events</h2>
         </div>
+        <a href="../events.html" class="hero_link">Alle Events ansehen</a>
+      </div>
+      <div class="events_cards">
+        <article class="events_card">
+          <div class="events_card_media">
+            <img src="../assets/images/events/sunday-sessions-photo.webp" alt="" loading="lazy" class="events_card_img" data-jym-events-image="sessions">
+          </div>
+          <div class="events_card_body">
+            <h3 class="events_card_title u-text-style-h5">Jedes Wochenende</h3>
+            <ul class="events_card_list" data-jym-events-list="sessions" data-jym-link-class="events_card_link">
+              <li><a href="https://www.eversports.de/s/jivamukti-yoga-muenchen-im-glockenbach" target="_blank" rel="noopener" class="events_card_link">Saturday Sessions <span class="events_card_link_note">Sa 17:00 &middot; Glockenbach</span></a></li>
+              <li><a href="https://www.eversports.de/s/jivamukti-yoga-muenchen-im-lehel" target="_blank" rel="noopener" class="events_card_link">Sunday Sessions <span class="events_card_link_note">So 19:00 &middot; Lehel</span></a></li>
+            </ul>
+          </div>
+        </article>
+        <article class="events_card">
+          <div class="events_card_media">
+            <img src="../assets/images/events/breathwork-kirsten-neulinger.webp" alt="" loading="lazy" class="events_card_img" data-jym-events-image="workshops">
+          </div>
+          <div class="events_card_body">
+            <h3 class="events_card_title u-text-style-h5">Workshops</h3>
+            <ul class="events_card_list" data-jym-events-list="workshops" data-jym-link-class="events_card_link">
+              <li><a href="../event/breathwork-reihe-2026.html" class="events_card_link">Breathwork Workshop <span class="events_card_link_note">14.11.</span></a></li>
+              <li><a href="../event/foundations-harmonium-workshop.html" class="events_card_link">Harmonium Workshop <span class="events_card_link_note">12.12.</span></a></li>
+            </ul>
+          </div>
+        </article>
+        <article class="events_card">
+          <div class="events_card_media">
+            <img src="../assets/images/munich/fc-india-1-218-980x768.jpg" alt="" loading="lazy" class="events_card_img" data-jym-events-image="training">
+          </div>
+          <div class="events_card_body">
+            <h3 class="events_card_title u-text-style-h5">Ausbildung &amp; Retreats</h3>
+            <ul class="events_card_list" data-jym-events-list="training" data-jym-link-class="events_card_link">
+              <li><a href="../75hr-training.html" class="events_card_link">75HR Teacher Training <span class="events_card_link_note">23.10.–15.11.</span></a></li>
+              <li data-jym-keep><a href="../retreats.html" class="events_card_link">Retreats <span class="events_card_link_note"><svg viewBox="0 0 66 70" fill="none" aria-hidden="true" class="u-svg arrow_icon"><path d="M17 2L50 34.9999L17 68" class="u-path"></path></svg></span></a></li>
+            </ul>
+          </div>
+        </article>
       </div>
     </div>
   </div>
@@ -494,6 +521,7 @@ document.addEventListener("DOMContentLoaded", function () {
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js"></script>
   <script src="../js/scroll.js?v=5dab06fe" defer></script>
+  <script src="../js/events-live.js?v=a2ffb644" defer></script>
   <script src="../js/main.js?v=ca16da3e"></script>
 </body>
 </html>

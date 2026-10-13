@@ -360,6 +360,11 @@ html:has(> body.u-theme-ink-brand)::-webkit-scrollbar-thumb,
     --feature-cards-columns: 4;
 }
 
+/* Preise: short groups (1-2 cards) sit in the middle, not against the left edge. */
+.feature_cards_grid.is-centered {
+    justify-content: center;
+}
+
 .feature_cards_grid > .feature_card_wrap {
     flex-basis: calc((100% - (var(--feature-cards-columns, 3) - 1) * var(--site--gutter)) / var(--feature-cards-columns, 3));
 }
@@ -2667,15 +2672,26 @@ html.lenis body {
     line-height: 1.55;
 }
 
+/* The two studios sit side by side; the one under the pointer widens. */
+.bands_row {
+    display: flex;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0%;
+    column-gap: 0.75rem;
+    row-gap: 0.75rem;
+    min-height: 0;
+}
+
 .band_card {
     position: relative;
     display: grid;
     flex-grow: 1;
     flex-shrink: 1;
     flex-basis: 0%;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 24rem);
-    align-items: end;
-    row-gap: 1rem;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: end;
+    row-gap: 1.5rem;
     column-gap: 3rem;
     min-height: 11rem;
     overflow-x: hidden;
@@ -2697,7 +2713,7 @@ html.lenis body {
 
 .band_card:hover,
 .band_card:focus-within {
-    flex-grow: 2.4;
+    flex-grow: 1.6;
 }
 
 .band_img {
@@ -2722,7 +2738,7 @@ html.lenis body {
     right: 0;
     bottom: 0;
     left: 0;
-    background-image: linear-gradient(90deg, rgba(25, 26, 28, 0.8) 0%, rgba(25, 26, 28, 0.35) 60%, rgba(25, 26, 28, 0.6) 100%);
+    background-image: linear-gradient(0deg, rgba(25, 26, 28, 0.85) 0%, rgba(25, 26, 28, 0.45) 55%, rgba(25, 26, 28, 0.15) 100%);
 }
 
 .band_name {
@@ -2734,7 +2750,7 @@ html.lenis body {
 .band_title {
     margin-top: 0;
     margin-bottom: 0;
-    font-size: clamp(2rem, 0.5rem + 5.6vw, 8rem);
+    font-size: clamp(2rem, 0.4rem + 3.4vw, 5rem);
     font-weight: var(--_typography---font--primary-semibold);
     line-height: 0.82;
     letter-spacing: var(--_typography---letter-spacing--tight);
@@ -2743,6 +2759,7 @@ html.lenis body {
 .band_side {
     position: relative;
     z-index: 2;
+    max-width: 26rem;
     font-size: 0.875rem;
     line-height: 1.55;
 }
@@ -2774,6 +2791,10 @@ html.lenis body {
 
     .studios_cluster:hover {
         flex-grow: 1;
+    }
+
+    .bands_row {
+        flex-direction: column;
     }
 
     .band_card {
@@ -2984,6 +3005,167 @@ html.lenis body {
     opacity: 0.85;
 }
 
+/* ── EVENTS MODAL (navbar "Events"): upcoming events as cards ──────────── */
+/* Simple cards (image on top, list below); lists and images filled live by js/events-live.js. */
+.gutschein_modal_wrap.is-events {
+    max-width: 68rem;
+    padding-top: clamp(1.25rem, 3vw, 2rem);
+    padding-right: clamp(1.25rem, 3vw, 2rem);
+    padding-bottom: clamp(1.25rem, 3vw, 2rem);
+    padding-left: clamp(1.25rem, 3vw, 2rem);
+}
+
+.events_modal_head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    row-gap: 0.75rem;
+    column-gap: 2rem;
+    margin-bottom: 1.25rem;
+    padding-right: 3.5rem;
+    color: var(--_theme---text);
+}
+
+.events_modal_title {
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+}
+
+.events_cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 0.75rem;
+    row-gap: 0.75rem;
+}
+
+.events_card {
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    border-top-width: var(--border-width--main);
+    border-right-width: var(--border-width--main);
+    border-bottom-width: var(--border-width--main);
+    border-left-width: var(--border-width--main);
+    border-top-style: solid;
+    border-right-style: solid;
+    border-bottom-style: solid;
+    border-left-style: solid;
+    border-top-color: var(--_theme---border);
+    border-right-color: var(--_theme---border);
+    border-bottom-color: var(--_theme---border);
+    border-left-color: var(--_theme---border);
+    border-top-left-radius: var(--radius--main);
+    border-top-right-radius: var(--radius--main);
+    border-bottom-left-radius: var(--radius--main);
+    border-bottom-right-radius: var(--radius--main);
+    color: var(--_theme---text);
+}
+
+.events_card_media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    background-color: var(--_theme---background-skeleton);
+}
+
+/* Eversports images mix portraits and Instagram flyers (photo on top, text below).
+   30% from the top frames faces in both without cropping heads. */
+.events_card_img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 30%;
+}
+
+.events_card_body {
+    padding-top: 1.1rem;
+    padding-right: 1.1rem;
+    padding-bottom: 1.1rem;
+    padding-left: 1.1rem;
+}
+
+.events_card_title {
+    margin-top: 0;
+    margin-bottom: 0.6rem;
+}
+
+.events_card_list {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-left: 0;
+    border-top-width: 1px;
+    border-top-style: solid;
+    border-top-color: var(--_theme---border);
+    list-style-type: none;
+}
+
+.events_card_link {
+    display: flex;
+    justify-content: space-between;
+    column-gap: 1rem;
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-bottom-color: var(--_theme---border);
+    color: inherit;
+    font-size: 0.9375rem;
+    font-weight: var(--_typography---font--primary-medium);
+    line-height: 1.35;
+    text-decoration-line: none;
+}
+
+.events_card_link:hover {
+    color: var(--swatch--brand-500);
+}
+
+.events_card_link_note {
+    font-weight: var(--_typography---font--primary-regular);
+    white-space: nowrap;
+    opacity: 0.7;
+}
+
+/* Rotating event photos (js/events-live.js): a second layer, class is-next,
+   sits on the original image and fades in and out over it. */
+.door_img.is-next {
+    opacity: 0;
+    transition-property: transform, filter, opacity;
+    transition-duration: 900ms, 560ms, 1200ms;
+}
+
+.events_card_img.is-next {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 1200ms;
+    transition-timing-function: ease;
+}
+
+.door_img.is-next.is-in,
+.events_card_img.is-next.is-in {
+    opacity: 1;
+}
+
+@media (max-width: 767px) {
+    .events_modal_head {
+        padding-right: 3rem;
+    }
+
+    .events_cards {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .events_card_media {
+        aspect-ratio: 3 / 2;
+    }
+}
+
 /* ── PREISE: inline ───────────────────────────────────────────────────── */
 .prices_inline_inner {
     display: flex;
@@ -3124,7 +3306,8 @@ html.lenis body {
 .plan_inner {
     display: grid;
     grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-    grid-template-areas: "help board";
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "studio board" "help board";
     align-items: start;
     column-gap: clamp(2rem, 5vw, 5rem);
     row-gap: var(--_spacing---space--7-48px);
@@ -3142,6 +3325,27 @@ html.lenis body {
     grid-column-start: help;
     grid-row-end: help;
     grid-column-end: help;
+}
+
+/* Which studio the planner shows; follows the studio tab (js/heroes.js).
+   Its own grid area: above the help text on desktop, above the planner below 992px. */
+.plan_studio {
+    grid-row-start: studio;
+    grid-column-start: studio;
+    grid-row-end: studio;
+    grid-column-end: studio;
+}
+
+.plan_studio_name {
+    margin-top: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.plan_studio_sub {
+    margin-top: 0;
+    margin-bottom: 0;
+    font-size: 0.9375rem;
+    opacity: 0.7;
 }
 
 .plan_howto {
@@ -3751,7 +3955,8 @@ html.lenis body {
 
     .plan_inner {
         grid-template-columns: minmax(0, 1fr);
-        grid-template-areas: "board" "help";
+        grid-template-rows: auto;
+        grid-template-areas: "studio" "board" "help";
     }
 
     .deck_stack {
@@ -3963,6 +4168,11 @@ a.bento_tile:hover .bento_arrow {
 
 .prices_inline_title:hover .prices_chip {
     width: 2.2em;
+}
+
+/* The wide pill starts at 2.2em, so it needs its own target to visibly grow too. */
+.prices_inline_title:hover .prices_chip.is-wide {
+    width: 2.8em;
 }
 
 @media (prefers-reduced-motion: reduce) {

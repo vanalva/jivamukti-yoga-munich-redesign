@@ -539,6 +539,7 @@
             x.setAttribute('aria-pressed', x === b ? 'true' : 'false');
           });
           state[key] = b.getAttribute('data-v');
+          if (key === 'studio') syncStudioName();
           renderDays();
           renderList();
         });
@@ -555,6 +556,46 @@
       });
       prev.addEventListener('click', function () { go(-1); });
       next.addEventListener('click', function () { go(1); });
+
+      /* Name the selected studio wherever the section asks for it:
+           data-jym-plan-studio-name  -> "Lehel"
+           data-jym-plan-studio-sub   -> its address (hidden when there is none) */
+      var STUDIO_LABEL = {
+        all: ['Alle Studios', 'Lehel & Glockenbach'],
+        L: ['Lehel', 'Robert-Koch-Str. 13, 80538 München'],
+        G: ['Glockenbach', 'Müllerstr. 33, Rückhaus, 80469 München'],
+        O: ['Online', '']
+      };
+      var scope = board.closest('section') || document;
+      function syncStudioName() {
+        var label = STUDIO_LABEL[state.studio] || STUDIO_LABEL.all;
+        Array.prototype.forEach.call(scope.querySelectorAll('[data-jym-plan-studio-name]'), function (el) {
+          el.textContent = label[0];
+        });
+        Array.prototype.forEach.call(scope.querySelectorAll('[data-jym-plan-studio-sub]'), function (el) {
+          el.textContent = label[1];
+          el.hidden = !label[1];
+        });
+      }
+
+      /* Starting studio: "?studio=lehel|glockenbach|online" in the URL (the
+         studio pages link here that way), else the tab marked active in the
+         markup. Only a studio this board has a tab for is accepted. */
+      var studioGroup = board.querySelector('[data-jym-plan-filter="studio"]');
+      if (studioGroup) {
+        var wanted = (/[?&]studio=([^&#]+)/.exec(window.location.search) || [])[1];
+        var code = { lehel: 'L', glockenbach: 'G', online: 'O', l: 'L', g: 'G', o: 'O' }[(wanted || '').toLowerCase()];
+        var pick = (code && studioGroup.querySelector('[data-v="' + code + '"]')) ||
+          studioGroup.querySelector('[data-v].is-active');
+        if (pick) {
+          Array.prototype.forEach.call(studioGroup.querySelectorAll('[data-v]'), function (x) {
+            x.classList.toggle('is-active', x === pick);
+            x.setAttribute('aria-pressed', x === pick ? 'true' : 'false');
+          });
+          state.studio = pick.getAttribute('data-v');
+        }
+      }
+      syncStudioName();
 
       renderDays();
       load().catch(fail);
