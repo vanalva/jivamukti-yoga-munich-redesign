@@ -34,25 +34,22 @@
 (function () {
   var ENDPOINT = 'https://graphql-widget-master.production.eversports.cloud/api/graphql';
   var WIDGET = '747b62f2-a622-479c-8f7f-8570df044af6';
-  var CACHE_KEY = 'jym-events-v2';
+  var CACHE_KEY = 'jym-events-v3';
   var CACHE_MS = 10 * 60 * 1000;
   var TZ = 'Europe/Berlin';
   var WINDOWS = 3;            // 3 x 30 days ahead; the API caps a request at 500 rows
   var SHORT = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
   var DOW = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 
-  /* Workshops come without a booking URL in the feed (Eversports books them
-     through its separate workshop flow), so they link to our own event page. */
-  var WORKSHOP_PAGES = [
-    [/breathwork/i, 'event/breathwork-reihe-2026.html'],
-    [/foundations\s+harmonium/i, 'event/foundations-harmonium-workshop.html'],
-    [/advanced\s+harmonium/i, 'event/advanced-harmonium-kurs.html']
-  ];
+  /* Classes and sessions carry their booking URL (detailsPageURL). Workshops and
+     trainings do not: Eversports books them on the page of their activity group,
+     /org/activity/<group id>, which is the link built for them here. */
+  var BOOKING = 'https://www.eversports.de/org/activity/';
 
   var QUERY = 'query JymEvents($widgetId: ID!, $timeRange: TimeRangeInput, $first: Int) {' +
     ' widget(id: $widgetId) { ... on WidgetActivitySchedule {' +
     ' activities(activityGroupPublicationStates: [ACTIVE, VIEW_ONLY], timeRange: $timeRange, first: $first, isArchived: false) {' +
-    ' nodes { start isCancelled detailsPageURL activityGroup { name category { name } venue { name }' +
+    ' nodes { start isCancelled detailsPageURL activityGroup { id name category { name } venue { name }' +
     ' imagesV2(first: 1) { nodes { url(size: MEDIUM) } } } } } } } }';
 
   var ymdFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
@@ -141,7 +138,10 @@
             start: new Date(n.start),
             name: cleanName(n.activityGroup.name, kind),
             studio: studioOf(n.activityGroup.venue && n.activityGroup.venue.name),
-            url: n.detailsPageURL || '',
+            url: n.detailsPageURL || (n.activityGroup.id ? BOOKING + n.activityGroup.id : ''),
+            /* a workshop listed in the class schedule as well ("Anmeldung über
+               Workshops!") has a class URL; the real workshop entry does not */
+            listing: !!n.detailsPageURL,
             /* the image the studio set for this event in Eversports (often its flyer) */
             image: n.activityGroup.imagesV2 && n.activityGroup.imagesV2.nodes[0] ? n.activityGroup.imagesV2.nodes[0].url : ''
           });
@@ -171,21 +171,24 @@
     }
 
     if (kind === 'workshops') {
-      /* The same workshop can be listed twice (once per booking flow): one row
-         per day and first word, preferring the entry that carries a URL. */
+      /* The same workshop can be listed twice (the workshop itself, plus a
+         placeholder in the class schedule): one row per day and first word,
+         preferring the real workshop, whose link opens its booking page. */
       var seen = {};
       var out = [];
       mine.forEach(function (x) {
         if (x.start.getTime() <= now) return;
         var key = ymd(x.start) + '|' + x.name.split(' ')[0].toLowerCase();
-        if (seen[key]) { if (!seen[key].url && x.url) seen[key].url = x.url; return; }
+        var had = seen[key];
+        if (had) {
+          if (had.listing && !x.listing) { out[out.indexOf(had)] = x; seen[key] = x; }
+          return;
+        }
         seen[key] = x;
         out.push(x);
       });
       return out.slice(0, 3).map(function (x) {
-        var page = '';
-        WORKSHOP_PAGES.forEach(function (m) { if (!page && m[0].test(x.name)) page = base + m[1]; });
-        return { label: x.name, note: dm(x.start), href: page || x.url || base + 'events.html#events-list' };
+        return { label: x.name, note: dm(x.start), href: x.url || base + 'events.html#events-list' };
       });
     }
 
