@@ -424,8 +424,23 @@
       var next = board.querySelector('[data-jym-plan-next]');
       var fallback = board.parentNode.querySelector('[data-jym-plan-fallback]');
       var today = ymd(new Date());
-      var state = { week: 0, day: today, studio: 'all', level: 'all', items: [], showPast: false };
+      var state = { week: 0, day: today, studio: 'all', level: 'all', items: [], showPast: false, teacher: '', teacherLabel: '', agenda: null, agendaAll: false };
       var MAX_WEEKS = 3;
+
+      /* Teacher filter: "?teacher=Katja%20Schwarz" (the "Zum Kursplan" buttons on
+         the team cards link here that way). Matched against the Eversports teacher
+         name, ignoring case and apostrophes ("Jessina O'Connell" is entered both
+         with and without one). Shared classes ("Andrea & Eleonora",
+         "Petros & Friends") count for each first name in them. */
+      function norm(s) {
+        return String(s || '').toLowerCase().replace(/['’`´]/g, '').replace(/\s+/g, ' ').trim();
+      }
+      function teaches(x) {
+        if (!state.teacher) return true;
+        var t = norm(x.teacher);
+        if (t === state.teacher) return true;
+        return t.indexOf('&') !== -1 && t.split(/\s*&\s*/).indexOf(state.teacher.split(' ')[0]) !== -1;
+      }
 
       function weekDays() {
         var mon = ymdAdd(mondayOf(today), state.week * 7);
@@ -438,11 +453,62 @@
         return state.items.filter(function (x) {
           return ymd(x.start) === day &&
             (state.studio === 'all' || x.studio === state.studio) &&
-            (state.level === 'all' || levels(x.level).indexOf(+state.level) !== -1);
+            (state.level === 'all' || levels(x.level).indexOf(+state.level) !== -1) &&
+            teaches(x);
         });
       }
 
+      /* A teacher filter swaps the week view for a list: all of that teacher's
+         classes in the next four weeks, grouped by date. Studio and level still
+         apply. The day tabs and week arrows hide while it is on. */
+      var navEl = board.querySelector('.plan_nav');
+      /* display, not [hidden]: the planner CSS sets display on both, which beats the attribute */
+      function setAgenda(on) {
+        daysEl.style.display = on ? 'none' : '';
+        if (navEl) navEl.style.display = on ? 'none' : '';
+      }
+      var AGENDA_FIRST = 8;
+      function renderAgenda() {
+        setAgenda(true);
+        if (!state.agenda) { list.innerHTML = skeleton(5).replace(/jym_row_item/g, 'plan_row'); return; }
+        var now = Date.now();
+        var rows = state.agenda.filter(function (x) {
+          return x.end.getTime() > now &&
+            (state.studio === 'all' || x.studio === state.studio) &&
+            (state.level === 'all' || levels(x.level).indexOf(+state.level) !== -1) &&
+            teaches(x);
+        });
+        weekEl.textContent = 'Nächste 4 Wochen · ' + rows.length + (rows.length === 1 ? ' Klasse' : ' Klassen');
+        if (!rows.length) {
+          list.innerHTML = '<li class="plan_empty">' + esc(state.teacherLabel) +
+            ' hat in den nächsten 4 Wochen in dieser Auswahl keine Klasse. Probier ein anderes Studio oder Level.</li>';
+          return;
+        }
+        var total = rows.length;
+        if (!state.agendaAll && total > AGENDA_FIRST) rows = rows.slice(0, AGENDA_FIRST);
+        var html = '';
+        var lastDay = '';
+        rows.forEach(function (x) {
+          var d = ymd(x.start);
+          if (d !== lastDay) {
+            var dt = new Date(d + 'T12:00:00Z');
+            var off = dayOffset(x.start);
+            html += '<li class="plan_date">' + (off === 0 ? 'Heute · ' : off === 1 ? 'Morgen · ' : '') +
+              DAYS[DOW[dowFmt.format(dt)]] + ', ' + dt.getUTCDate() + '. ' + MONTHS[dt.getUTCMonth()] + '</li>';
+            lastDay = d;
+          }
+          html += row(x);
+        });
+        if (rows.length < total) {
+          html += '<li class="plan_more"><button type="button" class="plan_more_button" data-jym-plan-all>Alle ' +
+            total + ' Klassen anzeigen</button></li>';
+        }
+        list.innerHTML = html;
+      }
+
       function renderDays() {
+        if (state.teacher) { renderAgenda(); return; }
+        setAgenda(false);
         var days = weekDays();
         daysEl.innerHTML = days.map(function (d) {
           var dt = new Date(d + 'T12:00:00Z');
@@ -481,12 +547,15 @@
       /* Finished classes fold away behind a button, so the list opens on what
          can still be booked. */
       function renderList() {
+        if (state.teacher) return;               // the agenda renders itself
         var rows = visible(state.day);
         var now = Date.now();
         var done = rows.filter(function (x) { return x.end.getTime() < now; });
         var open = rows.filter(function (x) { return x.end.getTime() >= now; });
         if (!rows.length) {
-          list.innerHTML = '<li class="plan_empty">An diesem Tag gibt es in dieser Auswahl keine Klasse. Probier ein anderes Studio, Level oder einen anderen Tag.</li>';
+          list.innerHTML = state.teacher
+            ? '<li class="plan_empty">An diesem Tag unterrichtet ' + esc(state.teacherLabel) + ' in dieser Auswahl keine Klasse. Probier einen anderen Tag oder eine andere Woche.</li>'
+            : '<li class="plan_empty">An diesem Tag gibt es in dieser Auswahl keine Klasse. Probier ein anderes Studio, Level oder einen anderen Tag.</li>';
           return;
         }
         var html = (state.showPast ? rows : open).map(row).join('');
@@ -499,6 +568,13 @@
       }
 
       function load() {
+        if (state.teacher) {
+          renderAgenda();
+          return loadRoster(true).then(function (items) {
+            state.agenda = items;
+            renderAgenda();
+          });
+        }
         var days = weekDays();
         list.innerHTML = skeleton(5).replace(/jym_row_item/g, 'plan_row');
         var start = new Date(days[0] + 'T00:00:00Z');
@@ -550,6 +626,7 @@
         load().catch(fail);
       }
       list.addEventListener('click', function (e) {
+        if (e.target.closest('[data-jym-plan-all]')) { state.agendaAll = true; renderAgenda(); return; }
         if (!e.target.closest('[data-jym-plan-past]')) return;
         state.showPast = true;
         renderList();
@@ -569,14 +646,179 @@
       var scope = board.closest('section') || document;
       function syncStudioName() {
         var label = STUDIO_LABEL[state.studio] || STUDIO_LABEL.all;
+        /* With a teacher filter the title names the teacher, the line below the studio. */
+        var name = state.teacher ? state.teacherLabel : label[0];
+        var sub = state.teacher ? label[0] : label[1];
+        Array.prototype.forEach.call(scope.querySelectorAll('[data-jym-plan-studio-eyebrow]'), function (el) {
+          el.textContent = state.teacher ? 'Klassen von' : 'Studio';
+        });
         Array.prototype.forEach.call(scope.querySelectorAll('[data-jym-plan-studio-name]'), function (el) {
-          el.textContent = label[0];
+          el.textContent = name;
         });
         Array.prototype.forEach.call(scope.querySelectorAll('[data-jym-plan-studio-sub]'), function (el) {
-          el.textContent = label[1];
-          el.hidden = !label[1];
+          el.textContent = sub;
+          el.hidden = !sub;
         });
       }
+
+      /* Teacher picker: a "Lehrer*in" button in the filter row that opens a
+         searchable list of everyone teaching in the next four weeks (read from
+         the same Eversports feed, so it never needs editing). Choosing a name
+         filters the planner, jumps to that teacher's next class and puts
+         ?teacher= in the URL, the same link the team cards use. */
+      var filters = board.querySelector('.plan_filters');
+      var picker = null;
+
+      function setUrlTeacher(name) {
+        if (!window.history || !history.replaceState) return;
+        var q = window.location.search.replace(/([?&])teacher=[^&#]*&?/, '$1').replace(/[?&]$/, '');
+        if (name) q += (q ? '&' : '?') + 'teacher=' + encodeURIComponent(name);
+        history.replaceState(null, '', window.location.pathname + q + window.location.hash);
+      }
+
+      function setTeacher(name) {
+        state.teacher = norm(name);
+        state.teacherLabel = name;
+        state.agendaAll = false;
+        state.week = 0;
+        state.day = today;
+        state.showPast = false;
+        setUrlTeacher(name);
+        syncStudioName();
+        syncPicker();
+        load().catch(fail);
+      }
+
+      function syncPicker() {
+        if (!picker) return;
+        var label = picker.querySelector('[data-jym-teacher-label]');
+        var clear = picker.querySelector('[data-jym-teacher-clear]');
+        var toggle = picker.querySelector('[data-jym-teacher-toggle]');
+        label.textContent = state.teacher ? state.teacherLabel : 'Lehrer*in';
+        toggle.classList.toggle('is-active', !!state.teacher);
+        clear.hidden = !state.teacher;
+      }
+
+      /* Everyone teaching in the next four weeks, one entry per person:
+         spellings differing only in apostrophes merge, shared classes
+         ("Andrea & Eleonora") are counted for each of the named teachers. */
+      /* One request for the next four weeks feeds both the teacher list and
+         the teacher agenda. loadRoster(true) returns the classes themselves. */
+      var roster = null;
+      var rosterItems = null;
+      function loadRoster(raw) {
+        if (!rosterItems) {
+          var from = new Date();
+          rosterItems = fetchRange(from, new Date(+from + 28 * 86400000), 'roster-' + today);
+          rosterItems.catch(function () { rosterItems = null; });
+        }
+        if (raw) return rosterItems;
+        if (roster) return roster;
+        roster = rosterItems.then(function (items) {
+          var byKey = {};
+          items.forEach(function (x) {
+            if (!x.teacher || x.teacher.indexOf('&') !== -1) return;
+            var key = norm(x.teacher);
+            var t = byKey[key] || (byKey[key] = { name: x.teacher, count: 0, names: {} });
+            t.count += 1;
+            t.names[x.teacher] = (t.names[x.teacher] || 0) + 1;
+          });
+          return Object.keys(byKey).map(function (k) {
+            var t = byKey[k];
+            /* most used spelling wins ("Jessina O'Connell" over "Jessina OConnell") */
+            t.name = Object.keys(t.names).sort(function (a, b) { return t.names[b] - t.names[a]; })[0];
+            return t;
+          }).sort(function (a, b) { return a.name.localeCompare(b.name, 'de'); });
+        });
+        roster.catch(function () { roster = null; });
+        return roster;
+      }
+
+      function buildPicker() {
+        if (!filters) return;
+        picker = document.createElement('div');
+        picker.className = 'jym_seg plan_teacher';
+        picker.setAttribute('role', 'group');
+        picker.setAttribute('aria-label', 'Lehrer*in');
+        picker.innerHTML =
+          '<button type="button" class="jym_seg_button plan_teacher_toggle" data-jym-teacher-toggle aria-haspopup="listbox" aria-expanded="false">' +
+            '<span data-jym-teacher-label>Lehrer*in</span><span class="plan_teacher_caret" aria-hidden="true">▾</span></button>' +
+          '<button type="button" class="jym_seg_button plan_teacher_clear" data-jym-teacher-clear aria-label="Lehrer*in-Filter entfernen" hidden>×</button>' +
+          '<div class="plan_teacher_panel" data-jym-teacher-panel hidden>' +
+            '<input type="search" class="plan_teacher_search" data-jym-teacher-search placeholder="Name suchen" aria-label="Lehrer*in suchen" autocomplete="off">' +
+            '<ul class="plan_teacher_list" role="listbox" aria-label="Lehrer*innen" data-jym-teacher-list><li class="plan_teacher_empty">Lädt …</li></ul>' +
+          '</div>';
+        filters.insertBefore(picker, filters.firstChild);
+
+        var toggle = picker.querySelector('[data-jym-teacher-toggle]');
+        var clear = picker.querySelector('[data-jym-teacher-clear]');
+        var panel = picker.querySelector('[data-jym-teacher-panel]');
+        var search = picker.querySelector('[data-jym-teacher-search]');
+        var listEl = picker.querySelector('[data-jym-teacher-list]');
+        var all = [];
+
+        function renderOptions() {
+          var q = norm(search.value);
+          var hits = all.filter(function (t) { return !q || norm(t.name).indexOf(q) !== -1; });
+          var html = q ? '' : '<li><button type="button" class="plan_teacher_option" role="option" data-teacher="">Alle Lehrer*innen</button></li>';
+          html += hits.map(function (t) {
+            return '<li><button type="button" class="plan_teacher_option' + (norm(t.name) === state.teacher ? ' is-active' : '') +
+              '" role="option" data-teacher="' + esc(t.name) + '">' + esc(t.name) +
+              '<span class="plan_teacher_count">' + t.count + (t.count === 1 ? ' Klasse' : ' Klassen') + '</span></button></li>';
+          }).join('');
+          listEl.innerHTML = html || '<li class="plan_teacher_empty">Keine Lehrer*in gefunden.</li>';
+        }
+
+        function open() {
+          panel.hidden = false;
+          toggle.setAttribute('aria-expanded', 'true');
+          search.value = '';
+          search.focus();
+          loadRoster().then(function (r) { all = r; renderOptions(); })
+            .catch(function () { listEl.innerHTML = '<li class="plan_teacher_empty">Liste gerade nicht verfügbar.</li>'; });
+        }
+        function close() {
+          panel.hidden = true;
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+
+        toggle.addEventListener('click', function () { if (panel.hidden) open(); else close(); });
+        clear.addEventListener('click', function () { setTeacher(''); });
+        search.addEventListener('input', renderOptions);
+        listEl.addEventListener('click', function (e) {
+          var b = e.target.closest('[data-teacher]');
+          if (!b) return;
+          close();
+          setTeacher(b.getAttribute('data-teacher'));
+        });
+        /* Enter picks the first match; arrows move through the list; Esc closes. */
+        picker.addEventListener('keydown', function (e) {
+          var opts = Array.prototype.slice.call(listEl.querySelectorAll('[data-teacher]'));
+          var i = opts.indexOf(document.activeElement);
+          if (e.key === 'Escape') { close(); toggle.focus(); }
+          else if (e.key === 'Enter' && document.activeElement === search && opts.length) {
+            e.preventDefault(); opts[0].click();
+          } else if (e.key === 'ArrowDown' && opts.length) {
+            e.preventDefault(); opts[Math.min(i + 1, opts.length - 1)].focus();
+          } else if (e.key === 'ArrowUp' && opts.length) {
+            e.preventDefault(); if (i <= 0) search.focus(); else opts[i - 1].focus();
+          }
+        });
+        document.addEventListener('click', function (e) { if (!picker.contains(e.target)) close(); });
+      }
+
+      buildPicker();
+
+      /* Teacher from the URL (team cards link here with ?teacher=). */
+      var wantedTeacher = (/[?&]teacher=([^&#]+)/.exec(window.location.search) || [])[1];
+      if (wantedTeacher) {
+        var teacherName = decodeURIComponent(wantedTeacher.replace(/\+/g, ' ')).replace(/\s+/g, ' ').trim();
+        if (teacherName) {
+          state.teacher = norm(teacherName);
+          state.teacherLabel = teacherName;
+        }
+      }
+      syncPicker();
 
       /* Starting studio: "?studio=lehel|glockenbach|online" in the URL (the
          studio pages link here that way), else the tab marked active in the

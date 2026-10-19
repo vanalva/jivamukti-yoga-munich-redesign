@@ -1825,6 +1825,139 @@ html.lenis body {
     color: var(--_theme---background);
 }
 
+/* Teacher picker in the planner filters (built by js/heroes.js). */
+.plan_teacher {
+    position: relative;
+}
+
+.plan_teacher_toggle {
+    display: inline-flex;
+    align-items: center;
+    column-gap: 0.4rem;
+}
+
+.plan_teacher_caret {
+    font-size: 0.65rem;
+    opacity: 0.7;
+}
+
+.plan_teacher_panel {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    left: 0;
+    z-index: 20;
+    width: 17rem;
+    max-width: calc(100vw - 3rem);
+    padding-top: 0.5rem;
+    padding-right: 0.5rem;
+    padding-bottom: 0.5rem;
+    padding-left: 0.5rem;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-style: solid;
+    border-right-style: solid;
+    border-bottom-style: solid;
+    border-left-style: solid;
+    border-top-color: var(--_theme---border);
+    border-right-color: var(--_theme---border);
+    border-bottom-color: var(--_theme---border);
+    border-left-color: var(--_theme---border);
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+    border-bottom-left-radius: 0.75rem;
+    border-bottom-right-radius: 0.75rem;
+    background-color: var(--_theme---background);
+    color: var(--_theme---text);
+}
+
+.plan_teacher_search {
+    width: 100%;
+    margin-bottom: 0.4rem;
+    padding-top: 0.55rem;
+    padding-right: 0.75rem;
+    padding-bottom: 0.55rem;
+    padding-left: 0.75rem;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-style: solid;
+    border-right-style: solid;
+    border-bottom-style: solid;
+    border-left-style: solid;
+    border-top-color: var(--_theme---border);
+    border-right-color: var(--_theme---border);
+    border-bottom-color: var(--_theme---border);
+    border-left-color: var(--_theme---border);
+    border-top-left-radius: var(--radius--round);
+    border-top-right-radius: var(--radius--round);
+    border-bottom-left-radius: var(--radius--round);
+    border-bottom-right-radius: var(--radius--round);
+    background-color: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: 0.8125rem;
+}
+
+.plan_teacher_list {
+    max-height: 16rem;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-left: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    list-style-type: none;
+}
+
+.plan_teacher_option {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    column-gap: 0.75rem;
+    width: 100%;
+    padding-top: 0.5rem;
+    padding-right: 0.75rem;
+    padding-bottom: 0.5rem;
+    padding-left: 0.75rem;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+    background-color: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.plan_teacher_option:hover,
+.plan_teacher_option:focus-visible,
+.plan_teacher_option.is-active {
+    background-color: var(--_theme---background-skeleton);
+}
+
+.plan_teacher_count {
+    flex-shrink: 0;
+    font-size: 0.6875rem;
+    opacity: 0.6;
+}
+
+.plan_teacher_empty {
+    padding-top: 0.5rem;
+    padding-right: 0.75rem;
+    padding-bottom: 0.5rem;
+    padding-left: 0.75rem;
+    font-size: 0.8125rem;
+    opacity: 0.7;
+}
+
 /* ── HOME: aperture → dock hero ───────────────────────────────────────── */
 .home_cover {
     position: relative;
@@ -3640,6 +3773,21 @@ html.lenis body {
 .plan_row_state {
     font-size: 0.8125rem;
     opacity: 0.6;
+}
+
+.plan_date {
+    padding-top: 1.4rem;
+    padding-bottom: 0.4rem;
+    font-size: 0.6875rem;
+    font-weight: var(--_typography---font--primary-medium);
+    letter-spacing: var(--_typography---letter-spacing--wider);
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+/* Agenda date headings (teacher filter) between the class rows. */
+.plan_date:first-child {
+    padding-top: 0.25rem;
 }
 
 .plan_empty {
